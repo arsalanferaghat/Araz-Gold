@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111"><title>GoldTrade | سامانه معاملات طلا</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="gold">◆</span><div><b>GoldTrade</b><small>سامانه معاملات طلا</small></div></div>
+    <nav>
+      <button class="nav active" data-page="dashboard">▦ <span>داشبورد</span></button>
+      <button class="nav" data-page="trade">⇄ <span>ثبت خرید و فروش</span></button>
+      <button class="nav" data-page="history">◷ <span>تاریخچه معاملات</span></button>
+      <button class="nav" data-page="calculator">▤ <span>ماشین‌حساب طلا</span></button>
+      <button class="nav" data-page="settings">⚙ <span>تنظیمات قیمت</span></button>
+    </nav>
+    <div class="sidebar-note">نسخه نمایشی اولیه<br><small>معاملات واقعی هنوز فعال نیست</small></div>
+  </aside>
+  <main>
+    <header><div><h1 id="page-title">داشبورد</h1><p>نمای کلی وضعیت معاملات و دارایی</p></div><div class="user-chip"><span class="avatar">م</span><span>مدیر سامانه</span></div></header>
+    <section id="dashboard" class="page show">
+      <div class="welcome"><div><span class="eyebrow">GOLD MARKET</span><h2>به GoldTrade خوش آمدید</h2><p>مدیریت خرید، فروش و دارایی طلا در یک محیط یکپارچه</p></div><div class="coin">Au</div></div>
+      <div class="grid stats">
+        <article class="stat"><span>موجودی طلا</span><strong id="gold-balance">۰٫۰۰۰ گرم</strong><small>بر اساس معاملات ثبت‌شده</small></article>
+        <article class="stat"><span>ارزش تقریبی دارایی</span><strong id="asset-value">۰ تومان</strong><small>با قیمت دستی تنظیم‌شده</small></article>
+        <article class="stat"><span>تعداد معاملات</span><strong id="trade-count">۰</strong><small>خرید و فروش ثبت‌شده</small></article>
+        <article class="stat"><span>سود/زیان تحقق‌یافته</span><strong id="profit">۰ تومان</strong><small>محاسبه پایه نسخه نمایشی</small></article>
+      </div>
+      <div class="grid market">
+        <article class="panel"><div class="panel-head"><h3>بازار ایران</h3><span class="tag">قیمت دستی</span></div><div class="price" id="iran-price">۰ <small>تومان / گرم ۱۸ عیار</small></div><p class="muted">قیمت را در بخش تنظیمات وارد کنید.</p></article>
+        <article class="panel"><div class="panel-head"><h3>بازار جهانی</h3><span class="tag muted-tag">نیازمند اتصال API</span></div><div class="price">— <small>دلار / اونس</small></div><p class="muted">قیمت جهانی در این نسخه هنوز به منبع زنده متصل نیست.</p></article>
+      </div>
+      <article class="panel"><div class="panel-head"><h3>آخرین معاملات</h3><button class="text-btn" data-go="history">مشاهده همه</button></div><div id="recent-list" class="empty">هنوز معامله‌ای ثبت نشده است.</div></article>
+    </section>
+    <section id="trade" class="page">
+      <article class="panel form-panel"><h2>ثبت معامله جدید</h2><p class="muted">این فرم صرفاً برای ثبت آزمایشی و حسابداری است.</p>
+        <form id="trade-form" class="form-grid">
+          <label>نوع معامله<select id="type"><option value="buy">خرید</option><option value="sell">فروش</option></select></label>
+          <label>بازار<select id="market"><option value="iran">ایران</option><option value="global">جهانی</option></select></label>
+          <label>نوع طلا<select id="kind"><option>طلای ۱۸ عیار</option><option>طلای ۲۴ عیار</option><option>مثقال</option><option>اونس</option><option>سکه</option></select></label>
+          <label>وزن (گرم)<input id="weight" type="number" min="0.001" step="0.001" required placeholder="مثلاً ۵٫۵"></label>
+          <label>قیمت هر گرم (تومان)<input id="unit-price" type="number" min="0" step="1" required placeholder="قیمت واحد"></label>
+          <label>کارمزد / هزینه (تومان)<input id="fee" type="number" min="0" step="1" value="0"></label>
+          <label class="wide">توضیحات<input id="note" maxlength="180" placeholder="اختیاری"></label>
+          <div class="total wide"><span>مبلغ نهایی</span><b id="trade-total">۰ تومان</b></div>
+          <button class="primary wide" type="submit">ثبت معامله آزمایشی</button>
+        </form>
+      </article>
+    </section>
+    <section id="history" class="page"><article class="panel"><div class="panel-head"><h2>تاریخچه معاملات</h2><button class="danger-outline" id="clear-trades">پاک‌کردن داده‌های نمایشی</button></div><div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>بازار</th><th>وزن</th><th>قیمت واحد</th><th>مبلغ</th><th>توضیحات</th></tr></thead><tbody id="history-body"><tr><td colspan="7" class="empty">هنوز معامله‌ای ثبت نشده است.</td></tr></tbody></table></div></article></section>
+    <section id="calculator" class="page"><article class="panel form-panel"><h2>ماشین‌حساب خرید و فروش</h2><p class="muted">محاسبه ساده بر اساس وزن و قیمت ورودی؛ مالیات و اجرت جداگانه قابل افزودن است.</p><div class="form-grid"><label>وزن (گرم)<input id="calc-weight" type="number" min="0" step="0.001" value="1"></label><label>قیمت هر گرم (تومان)<input id="calc-price" type="number" min="0" value="0"></label><label>اجرت (تومان)<input id="calc-wage" type="number" min="0" value="0"></label><label>سایر هزینه‌ها (تومان)<input id="calc-extra" type="number" min="0" value="0"></label></div><div class="total"><span>مبلغ محاسبه‌شده</span><b id="calc-total">۰ تومان</b></div></article></section>
+    <section id="settings" class="page"><article class="panel form-panel"><h2>تنظیمات قیمت</h2><p class="muted">تا زمان اتصال منبع قیمت معتبر، قیمت بازار ایران را دستی وارد کنید.</p><label>قیمت هر گرم طلای ۱۸ عیار (تومان)<input id="setting-price" type="number" min="0" placeholder="قیمت روز"></label><button id="save-price" class="primary">ذخیره قیمت</button><p class="warning">هشدار: قیمت واردشده دستی و غیرزنده است. برای معامله واقعی، منبع قیمت، تأخیر داده و صحت آن باید بررسی شود.</p></article></section>
+    <footer>GoldTrade • نسخه نمایشی اولیه • فاقد اتصال بانکی، پرداخت و اجرای سفارش واقعی</footer>
+  </main>
+  <script src="app.js"></script>
+</body></html>
