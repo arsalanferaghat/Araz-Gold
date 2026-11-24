@@ -232,6 +232,7 @@ async function fetchOnlinePrice() {
     }
 
     priceRequestRunning = true;
+
     updatePriceStatus('در حال دریافت قیمت...', 'loading');
 
     try {
@@ -268,8 +269,10 @@ async function fetchOnlinePrice() {
 
         savePriceData();
 
+        // همگام‌سازی قیمت فرم‌ها
         syncPriceInputs(oldPrice, newPrice);
 
+        // به‌روزرسانی داشبورد و سایر قسمت‌ها
         render();
 
         updatePriceStatus(
@@ -305,7 +308,6 @@ function updatePriceStatus(message, status) {
     if (!el) return;
 
     el.textContent = message;
-
     el.dataset.status = status || '';
 }
 
@@ -342,6 +344,8 @@ function setPriceMode(mode) {
     }
 
     syncPriceInputs(oldPrice, settings.price);
+
+    renderDashboard();
 }
 
 // ایجاد کنترل حالت قیمت بدون نیاز به تغییر HTML
@@ -374,17 +378,6 @@ function createPriceControls() {
                 font-family:inherit;
             ">
         </button>
-
-        <a href="https://talasanj.info"
-           target="_blank"
-           rel="noopener noreferrer"
-           style="
-               color:#d8ad55;
-               font-size:12px;
-               text-decoration:underline;
-           ">
-           قیمت‌ها از طلاسنج
-        </a>
     `;
 
     target.insertAdjacentElement('afterend', box);
@@ -491,11 +484,37 @@ function renderDashboard() {
 
     safeText('trade-count', money(trades.length));
 
+    // نمایش قیمت بزرگ در کارت خوش‌آمدگویی
+    safeText(
+        'hero-gold-price',
+        settings.price > 0
+            ? money(settings.price)
+            : 'در انتظار دریافت قیمت'
+    );
+
+    safeText(
+        'hero-price-status',
+        priceMode === 'manual'
+            ? '● حالت ورود دستی قیمت'
+            : !navigator.onLine
+                ? '● آفلاین؛ آخرین قیمت ذخیره‌شده'
+                : priceSource === 'Talasanj'
+                    ? '● دریافت خودکار قیمت آنلاین'
+                    : '● در انتظار دریافت قیمت آنلاین'
+    );
+
+    safeText(
+        'hero-price-updated',
+        priceUpdated
+            ? 'آخرین به‌روزرسانی: ' + formatPriceDate(priceUpdated)
+            : 'هنوز قیمتی دریافت نشده است'
+    );
+
+    // بازار ایران بدون لینک تکراری منبع
     safeHTML(
         'iran-price',
         money(settings.price) +
-        ' <small>تومان / گرم ۱۸ عیار</small>' +
-        ' <small><a href="https://talasanj.info" target="_blank" rel="noopener noreferrer" style="color:#d8ad55">قیمت‌ها از طلاسنج</a></small>'
+        ' <small>تومان / گرم ۱۸ عیار</small>'
     );
 
     safeText(
@@ -512,6 +531,7 @@ function renderDashboard() {
             : 'هنوز قیمتی دریافت نشده است'
     );
 
+    // بازار جهانی
     safeText(
         'global-price',
         settings.ounce > 0
@@ -526,6 +546,7 @@ function renderDashboard() {
 
     safeText('profit', '—');
 
+    // آخرین معاملات
     const rows = [...trades].reverse();
 
     safeHTML(
@@ -1007,11 +1028,22 @@ $('save-price')?.addEventListener('click', () => {
 
     syncPriceInputs(oldPrice, settings.price);
 
+    renderDashboard();
+
     notify(
         priceMode === 'manual'
             ? 'قیمت دستی و تنظیمات با موفقیت ذخیره شد.'
             : 'تنظیمات ذخیره شد. قیمت طلا همچنان آنلاین دریافت می‌شود.'
     );
+});
+
+// دکمه به‌روزرسانی آنلاین
+$('online-price')?.addEventListener('click', () => {
+    if (priceMode !== 'online') {
+        setPriceMode('online');
+    } else {
+        fetchOnlinePrice();
+    }
 });
 
 /* =========================================
@@ -1148,6 +1180,9 @@ function updateConnection() {
                 : 'بدون اینترنت و بدون قیمت ذخیره‌شده',
             'error'
         );
+
+        renderDashboard();
+
     } else if (priceMode === 'online') {
         fetchOnlinePrice();
     }
