@@ -177,20 +177,19 @@ function getTotalSell() {
    CENTRAL GOLD PRICE SYSTEM
    ========================================= */
 
-// قیمت مرکزی مورد استفاده تمام قسمت‌های برنامه
 function getGoldPrice() {
     return num(settings.price);
 }
 
-// ذخیره اطلاعات قیمت
 function savePriceData() {
     writeStorage(STORAGE.price, settings.price);
+    writeStorage(STORAGE.ounce, settings.ounce);
+    writeStorage(STORAGE.dollar, settings.dollar);
     writeStorage(STORAGE.priceUpdated, priceUpdated);
     writeStorage(STORAGE.priceSource, priceSource);
     writeStorage(STORAGE.priceMode, priceMode);
 }
 
-// همگام‌سازی فیلدهای قیمت با نرخ مرکزی
 function syncPriceInputs(oldPrice, newPrice) {
     const priceFields = [
         'unit-price',
@@ -221,7 +220,10 @@ function syncPriceInputs(oldPrice, newPrice) {
     updateCalculator();
 }
 
-// دریافت قیمت از Worker
+/* =========================================
+   ONLINE PRICE FETCH
+   ========================================= */
+
 async function fetchOnlinePrice() {
     if (
         priceMode !== 'online' ||
@@ -233,7 +235,7 @@ async function fetchOnlinePrice() {
 
     priceRequestRunning = true;
 
-    updatePriceStatus('در حال دریافت قیمت...', 'loading');
+    updatePriceStatus('در حال دریافت قیمت‌ها...', 'loading');
 
     try {
         const response = await fetch(PRICE_API, {
@@ -255,39 +257,62 @@ async function fetchOnlinePrice() {
             !Number.isFinite(Number(data.gram18)) ||
             Number(data.gram18) <= 0
         ) {
-            throw new Error('Invalid price data');
+            throw new Error('Invalid gold price data');
         }
 
         const oldPrice = settings.price;
         const newPrice = Number(data.gram18);
 
+        // قیمت طلای ۱۸ عیار
         settings.price = newPrice;
         lastSyncedPrice = newPrice;
 
+        // نرخ آنلاین دلار
+        const newDollar = Number(data.usd);
+
+        if (
+            Number.isFinite(newDollar) &&
+            newDollar > 0
+        ) {
+            settings.dollar = newDollar;
+        }
+
+        // نرخ آنلاین اونس جهانی
+        const newOunce = Number(data.ounce);
+
+        if (
+            Number.isFinite(newOunce) &&
+            newOunce > 0
+        ) {
+            settings.ounce = newOunce;
+        }
+
+        // زمان و منبع دریافت
         priceUpdated = data.updatedAt || new Date().toISOString();
         priceSource = 'Talasanj';
 
+        // ذخیره هر سه قیمت
         savePriceData();
 
-        // همگام‌سازی قیمت فرم‌ها
+        // همگام‌سازی فیلدهای قیمت
         syncPriceInputs(oldPrice, newPrice);
 
-        // به‌روزرسانی داشبورد و سایر قسمت‌ها
+        // به‌روزرسانی تمام قسمت‌ها
         render();
 
         updatePriceStatus(
-            'قیمت آنلاین دریافت شد',
+            'هر سه نرخ با موفقیت به‌روزرسانی شدند',
             'success'
         );
 
         return true;
 
     } catch (error) {
-        console.warn('Online gold price:', error);
+        console.warn('Online price error:', error);
 
         updatePriceStatus(
             settings.price > 0
-                ? 'عدم دریافت نرخ جدید؛ نمایش آخرین قیمت ذخیره‌شده'
+                ? 'عدم دریافت نرخ جدید؛ آخرین قیمت‌های ذخیره‌شده نمایش داده می‌شوند'
                 : 'دریافت قیمت ناموفق بود',
             'error'
         );
@@ -301,7 +326,10 @@ async function fetchOnlinePrice() {
     }
 }
 
-// نمایش وضعیت قیمت
+/* =========================================
+   PRICE STATUS
+   ========================================= */
+
 function updatePriceStatus(message, status) {
     const el = $('price-update-time');
 
@@ -311,7 +339,6 @@ function updatePriceStatus(message, status) {
     el.dataset.status = status || '';
 }
 
-// انتخاب حالت آنلاین یا دستی
 function setPriceMode(mode) {
     const oldPrice = settings.price;
 
@@ -332,7 +359,7 @@ function setPriceMode(mode) {
             fetchOnlinePrice();
         } else {
             updatePriceStatus(
-                'آفلاین؛ آخرین قیمت ذخیره‌شده نمایش داده می‌شود',
+                'آفلاین؛ آخرین قیمت‌های ذخیره‌شده نمایش داده می‌شوند',
                 'error'
             );
         }
@@ -348,7 +375,6 @@ function setPriceMode(mode) {
     renderDashboard();
 }
 
-// ایجاد کنترل حالت قیمت بدون نیاز به تغییر HTML
 function createPriceControls() {
     const target = $('price-update-time');
 
@@ -401,7 +427,6 @@ function updatePriceModeButton() {
         : 'حالت دستی فعال است • تغییر به آنلاین';
 }
 
-// شروع دریافت خودکار قیمت
 function startPriceUpdates() {
     if (priceTimer) {
         clearInterval(priceTimer);
@@ -414,7 +439,7 @@ function startPriceUpdates() {
     } else {
         updatePriceStatus(
             settings.price > 0
-                ? 'آفلاین؛ آخرین قیمت ذخیره‌شده'
+                ? 'آفلاین؛ آخرین قیمت‌های ذخیره‌شده'
                 : 'بدون اینترنت و بدون قیمت ذخیره‌شده',
             'error'
         );
@@ -484,7 +509,7 @@ function renderDashboard() {
 
     safeText('trade-count', money(trades.length));
 
-    // نمایش قیمت بزرگ در کارت خوش‌آمدگویی
+    // قیمت طلای ۱۸ عیار
     safeText(
         'hero-gold-price',
         settings.price > 0
@@ -510,7 +535,25 @@ function renderDashboard() {
             : 'هنوز قیمتی دریافت نشده است'
     );
 
-    // بازار ایران بدون لینک تکراری منبع
+    // قیمت اونس جهانی
+    const ounceValue = settings.ounce > 0
+        ? new Intl.NumberFormat('fa-IR', {
+            maximumFractionDigits: 2
+        }).format(settings.ounce)
+        : 'ثبت نشده';
+
+    // نرخ دلار
+    const dollarValue = settings.dollar > 0
+        ? money(settings.dollar)
+        : 'ثبت نشده';
+
+    // نمایش قیمت اونس در بخش بالایی صفحه
+    safeText('hero-ounce-price', ounceValue);
+
+    // نمایش دلار در بخش بالایی صفحه
+    safeText('hero-dollar-price', dollarValue);
+
+    // بازار ایران
     safeHTML(
         'iran-price',
         money(settings.price) +
@@ -531,7 +574,19 @@ function renderDashboard() {
             : 'هنوز قیمتی دریافت نشده است'
     );
 
-    // بازار جهانی
+    // بازار جهانی: اونس
+    safeText(
+        'global-ounce-price',
+        ounceValue
+    );
+
+    // بازار ارز: دلار
+    safeText(
+        'global-dollar-price',
+        dollarValue
+    );
+
+    // سازگاری با نسخه قبلی HTML
     safeText(
         'global-price',
         settings.ounce > 0
@@ -541,7 +596,11 @@ function renderDashboard() {
 
     safeText(
         'global-price-status',
-        settings.ounce > 0 ? 'نرخ ذخیره‌شده' : 'نرخ وارد نشده'
+        priceMode === 'online'
+            ? (navigator.onLine
+                ? 'قیمت آنلاین'
+                : 'آخرین نرخ ذخیره‌شده')
+            : 'قیمت دستی'
     );
 
     safeText('profit', '—');
@@ -714,8 +773,6 @@ $('trade-form')?.addEventListener('submit', event => {
     event.target.reset();
 
     safeValue('fee', 0);
-
-    // بعد از ثبت معامله، نرخ روز دوباره در فرم قرار بگیرد
     safeValue('unit-price', getGoldPrice());
 
     updateTradeTotal();
@@ -741,7 +798,6 @@ function percentAmount(amount, percent) {
     return amount * num(percent) / 100;
 }
 
-// محاسبه خرید
 function calculateBuy() {
     const weight = num($('buy-weight')?.value);
     const purity = num($('buy-purity')?.value);
@@ -777,7 +833,6 @@ function calculateBuy() {
     };
 }
 
-// محاسبه فروش
 function calculateSell() {
     const weight = num($('sell-weight')?.value);
     const purity = num($('sell-purity')?.value);
@@ -807,7 +862,6 @@ function calculateSell() {
     };
 }
 
-// محاسبه تعویض
 function calculateExchange() {
     const oldWeight = num($('old-weight')?.value);
     const oldPurity = num($('old-purity')?.value);
@@ -1033,11 +1087,10 @@ $('save-price')?.addEventListener('click', () => {
     notify(
         priceMode === 'manual'
             ? 'قیمت دستی و تنظیمات با موفقیت ذخیره شد.'
-            : 'تنظیمات ذخیره شد. قیمت طلا همچنان آنلاین دریافت می‌شود.'
+            : 'تنظیمات ذخیره شد. قیمت‌های آنلاین در دریافت بعدی به‌روزرسانی می‌شوند.'
     );
 });
 
-// دکمه به‌روزرسانی آنلاین
 $('online-price')?.addEventListener('click', () => {
     if (priceMode !== 'online') {
         setPriceMode('online');
@@ -1176,7 +1229,7 @@ function updateConnection() {
     if (!online) {
         updatePriceStatus(
             settings.price > 0
-                ? 'بدون اینترنت؛ آخرین قیمت ذخیره‌شده'
+                ? 'بدون اینترنت؛ آخرین قیمت‌های ذخیره‌شده'
                 : 'بدون اینترنت و بدون قیمت ذخیره‌شده',
             'error'
         );
@@ -1228,8 +1281,6 @@ updateConnection();
 
 show('dashboard');
 
-// قرار دادن نرخ ذخیره‌شده در فیلدهای قیمت
 syncPriceInputs(0, settings.price);
 
-// شروع دریافت خودکار
 startPriceUpdates();
