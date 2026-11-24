@@ -547,10 +547,8 @@ function renderDashboard() {
         ? money(settings.dollar)
         : 'ثبت نشده';
 
-    // نمایش قیمت اونس در بخش بالایی صفحه
+    // نمایش سه قیمت اصلی در بالای داشبورد
     safeText('hero-ounce-price', ounceValue);
-
-    // نمایش دلار در بخش بالایی صفحه
     safeText('hero-dollar-price', dollarValue);
 
     // بازار ایران
