@@ -1249,3 +1249,101 @@ footer a:hover {
         font-size: 16px;
     }
 }
+
+
+/* بزرگ‌نمایی حداکثری قیمت‌های داشبورد */
+.hero-prices {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    max-width: none;
+}
+
+.hero-price {
+    min-width: 0;
+    min-height: 145px;
+    padding: 18px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.hero-price-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.hero-price strong {
+    display: block;
+    width: 100%;
+    font-size: clamp(24px, 2.5vw, 38px);
+    font-weight: 900;
+    line-height: 1.8;
+    white-space: nowrap;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.hero-price-info {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.hero-price-status {
+    font-size: 11px;
+}
+
+.hero-price-updated {
+    font-size: 10px;
+}
+
+/* تبلت و صفحه‌های متوسط */
+@media (max-width: 1050px) {
+    .hero-prices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-price strong {
+        font-size: clamp(25px, 4vw, 36px);
+    }
+}
+
+/* گوشی */
+@media (max-width: 650px) {
+    .hero-prices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .hero-price {
+        min-height: 125px;
+        padding: 13px 6px;
+    }
+
+    .hero-price-title {
+        font-size: 13px;
+    }
+
+    .hero-price strong {
+        font-size: clamp(21px, 5.5vw, 30px);
+    }
+
+    .hero-price-info {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 380px) {
+    .hero-price strong {
+        font-size: 20px;
+    }
+
+    .hero-price-title {
+        font-size: 11px;
+    }
+}
