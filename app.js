@@ -18,6 +18,7 @@ const STORAGE = {
     price: 'ag_price',
     ounce: 'ag_ounce',
     dollar: 'ag_dollar',
+    tether: 'ag_tether',
     wage: 'ag_wage',
     profit: 'ag_profit',
     tax: 'ag_tax',
@@ -73,10 +74,12 @@ function writeStorage(key, value) {
 let trades = readStorage(STORAGE.trades, []);
 let calculations = readStorage(STORAGE.calculations, []);
 
+
 let settings = {
     price: num(readStorage(STORAGE.price, 0)),
     ounce: num(readStorage(STORAGE.ounce, 0)),
     dollar: num(readStorage(STORAGE.dollar, 0)),
+    tether: num(readStorage(STORAGE.tether, 0)),
     wage: num(readStorage(STORAGE.wage, 0)),
     profit: num(readStorage(STORAGE.profit, 0)),
     tax: num(readStorage(STORAGE.tax, 0))
@@ -185,6 +188,7 @@ function savePriceData() {
     writeStorage(STORAGE.price, settings.price);
     writeStorage(STORAGE.ounce, settings.ounce);
     writeStorage(STORAGE.dollar, settings.dollar);
+    writeStorage(STORAGE.tether, settings.tether);
     writeStorage(STORAGE.priceUpdated, priceUpdated);
     writeStorage(STORAGE.priceSource, priceSource);
     writeStorage(STORAGE.priceMode, priceMode);
@@ -268,10 +272,10 @@ async function fetchOnlinePrice() {
         lastSyncedPrice = newPrice;
 
         // نرخ آنلاین دلار
-        const newDollar = Number(data.usd);
+        const new = Number(data.usd);
 
         if (
-            Number.isFinite(newDollar) &&
+            Number.isFinite(new) &&
             newDollar > 0
         ) {
             settings.dollar = newDollar;
