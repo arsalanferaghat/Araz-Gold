@@ -532,16 +532,16 @@ function renderDashboard() {
             : 'در انتظار دریافت قیمت'
     );
 
-    safeText(
-        'hero-price-status',
-        priceMode === 'manual'
-            ? '● حالت ورود دستی قیمت'
-            : !navigator.onLine
-                ? '● آفلاین؛ آخرین قیمت ذخیره‌شده'
-                : priceSource === 'Talasanj'
-                    ? '● دریافت خودکار قیمت آنلاین'
-                    : '● در انتظار دریافت قیمت آنلاین'
-    );
+safeText(
+    'hero-price-status',
+    priceMode === 'manual'
+        ? '● حالت ورود دستی قیمت'
+        : !navigator.onLine
+            ? '● آفلاین؛ آخرین قیمت ذخیره‌شده'
+            : priceSource === 'Talasanj'
+                ? '● دریافت خودکار قیمت آنلاین'
+                : '● در انتظار دریافت قیمت آنلاین'
+);
 
     safeText(
         'hero-price-updated',
