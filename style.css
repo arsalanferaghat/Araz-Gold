@@ -1430,3 +1430,15 @@ footer a:hover {
         font-size: 26px;
     }
 }
+
+/* انتقال منوی اصلی به سمت راست */
+@media (min-width: 651px) {
+    body {
+        flex-direction: row-reverse;
+    }
+
+    .sidebar {
+        border-right: none !important;
+        border-left: 1px solid var(--line) !important;
+    }
+}
