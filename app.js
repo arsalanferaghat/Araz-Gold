@@ -271,15 +271,15 @@ async function fetchOnlinePrice() {
         settings.price = newPrice;
         lastSyncedPrice = newPrice;
 
-        // نرخ آنلاین دلار
-        const new = Number(data.usd);
+// نرخ آنلاین دلار
+const newDollar = Number(data.usd);
 
-        if (
-            Number.isFinite(new) &&
-            newDollar > 0
-        ) {
-            settings.dollar = newDollar;
-        }
+if (
+    Number.isFinite(newDollar) &&
+    newDollar > 0
+) {
+    settings.dollar = newDollar;
+}
 
         // نرخ آنلاین اونس جهانی
         const newOunce = Number(data.ounce);
