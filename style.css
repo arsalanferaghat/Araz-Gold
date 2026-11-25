@@ -1042,3 +1042,210 @@ footer a:hover {
         font-size: 27px;
     }
 }
+
+
+/* =====================================
+   ARAZ GOLD - NEW COMPACT LAYOUT
+===================================== */
+
+/* قرارگیری منوی دسکتاپ در سمت چپ */
+@media (min-width: 651px) {
+    body {
+        direction: ltr;
+        display: flex;
+    }
+
+    .sidebar {
+        direction: rtl;
+        border-left: 0;
+        border-right: 1px solid var(--line);
+        width: 225px;
+        min-width: 225px;
+        min-height: 100vh;
+    }
+
+    main {
+        direction: rtl;
+        flex: 1;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        margin: 0;
+        padding: 20px 26px;
+    }
+}
+
+/* فشرده‌سازی بخش خوشامدگویی */
+.welcome {
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.welcome h2 {
+    font-size: 20px;
+    margin: 5px 0;
+}
+
+.welcome p {
+    font-size: 12px;
+}
+
+.coin {
+    display: none;
+}
+
+/* چهار قیمت در یک ردیف */
+.hero-prices {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: none;
+    margin-top: 14px;
+}
+
+.hero-price {
+    min-width: 0;
+    padding: 12px 13px;
+    border-radius: 12px;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.hero-price-title {
+    font-size: 12px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+
+.hero-price strong {
+    font-size: clamp(16px, 1.65vw, 24px);
+    line-height: 1.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero-price-info {
+    font-size: 10px;
+    margin-top: 0;
+}
+
+.hero-price-status {
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+.hero-price-updated {
+    font-size: 9px;
+    margin-top: 3px;
+    line-height: 1.8;
+}
+
+.price-source {
+    margin-top: 5px;
+    font-size: 10px;
+}
+
+/* حذف فضای اضافی پنل‌های قیمت قدیمی */
+.market {
+    display: none;
+}
+
+/* تبلت و نمایشگرهای متوسط */
+@media (max-width: 1050px) and (min-width: 651px) {
+    .hero-prices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-price strong {
+        font-size: 22px;
+    }
+}
+
+/* موبایل */
+@media (max-width: 650px) {
+    body {
+        display: block;
+        direction: rtl;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 12px;
+        border-right: 0;
+        border-left: 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .sidebar nav {
+        display: flex;
+        overflow-x: auto;
+        gap: 5px;
+    }
+
+    .nav {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    main {
+        width: 100%;
+        padding: 14px 12px;
+    }
+
+    .welcome {
+        padding: 14px;
+    }
+
+    .welcome h2 {
+        font-size: 17px;
+    }
+
+    .hero-prices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .hero-price {
+        padding: 11px 10px;
+    }
+
+    .hero-price-title {
+        font-size: 11px;
+    }
+
+    .hero-price strong {
+        font-size: clamp(17px, 5vw, 23px);
+    }
+
+    .hero-price-info {
+        font-size: 10px;
+    }
+
+    .hero-price-status,
+    .hero-price-updated {
+        font-size: 9px;
+    }
+
+    .price-source {
+        font-size: 10px;
+    }
+}
+
+/* موبایل کوچک */
+@media (max-width: 380px) {
+    .hero-price {
+        padding: 9px 7px;
+    }
+
+    .hero-price-title {
+        font-size: 10px;
+    }
+
+    .hero-price strong {
+        font-size: 16px;
+    }
+}
