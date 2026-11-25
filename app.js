@@ -291,6 +291,17 @@ async function fetchOnlinePrice() {
             settings.ounce = newOunce;
         }
 
+// نرخ آنلاین تتر از نوبیتکس
+const newTether = Number(data.tether);
+
+if (
+    Number.isFinite(newTether) &&
+    newTether > 0
+) {
+    settings.tether = newTether;
+}
+
+       
         // زمان و منبع دریافت
         priceUpdated = data.updatedAt || new Date().toISOString();
         priceSource = 'Talasanj';
@@ -305,7 +316,7 @@ async function fetchOnlinePrice() {
         render();
 
         updatePriceStatus(
-            'هر سه نرخ با موفقیت به‌روزرسانی شدند',
+            'هر چهار نرخ با موفقیت به‌روزرسانی شدند',
             'success'
         );
 
