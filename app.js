@@ -1234,14 +1234,14 @@ function updateConnection() {
 
     safeText(
         'offline-status',
-        online ? 'متصل به اینترنت......' : 'حالت آفلاین'
+        online ? 'متصل به اینترنت' : 'حالت آفلاین'
     );
 
     const status = document.querySelector('.connection-status');
 
     if (status) {
         status.textContent = online
-            ? 'متصل به اینترنت...قیمت بروزرسانی شد*'
+            ? '۰متصل به اینترنت...قیمت بروزرسانی شد'
             : '!!!بدون اینترنت';
 
         status.classList.toggle('offline', !online);
