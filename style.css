@@ -1091,14 +1091,22 @@ footer a:hover {
     }
 }
 
-/* انتقال منوی اصلی به سمت راست */
+/* تثبیت منوی سمت راست در دسکتاپ */
 @media (min-width: 651px) {
     body {
-        flex-direction: row-reverse;
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        direction: rtl !important;
     }
 
     .sidebar {
+        order: 2 !important;
         border-right: none !important;
         border-left: 1px solid var(--line) !important;
+    }
+
+    .main-content {
+        order: 1 !important;
+        direction: rtl !important;
     }
 }
