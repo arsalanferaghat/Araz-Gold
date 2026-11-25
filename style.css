@@ -1090,3 +1090,15 @@ footer a:hover {
         font-size: clamp(24px, 8vw, 30px);
     }
 }
+
+/* انتقال منوی اصلی به سمت راست */
+@media (min-width: 651px) {
+    body {
+        flex-direction: row-reverse;
+    }
+
+    .sidebar {
+        border-right: none !important;
+        border-left: 1px solid var(--line) !important;
+    }
+}
