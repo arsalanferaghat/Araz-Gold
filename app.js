@@ -1234,7 +1234,7 @@ function updateConnection() {
 
     safeText(
         'offline-status',
-        online ? 'متصل به اینترنت' : 'حالت آفلاین'
+        online ? '!متصل به اینترنت...قیمت بروزرسانی شد' : 'حالت آفلاین*'
     );
 
     const status = document.querySelector('.connection-status');
