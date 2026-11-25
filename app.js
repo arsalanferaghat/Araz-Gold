@@ -1241,7 +1241,7 @@ function updateConnection() {
 
     if (status) {
         status.textContent = online
-            ? '●متصل به اینترنت...قیمت بروزرسانی شد'
+            ? '● متصل به اینترنت*قیمت بروزرسانی شد*'
             : '!!!بدون اینترنت';
 
         status.classList.toggle('offline', !online);
