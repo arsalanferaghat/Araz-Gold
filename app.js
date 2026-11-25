@@ -566,6 +566,14 @@ function renderDashboard() {
     safeText('hero-ounce-price', ounceValue);
     safeText('hero-dollar-price', dollarValue);
 
+   // نمایش قیمت تتر
+safeText(
+    'hero-tether-price',
+    settings.tether > 0
+        ? money(settings.tether)
+        : 'ثبت نشده'
+);
+   
     // بازار ایران
     safeHTML(
         'iran-price',
