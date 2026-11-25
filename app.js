@@ -1242,7 +1242,7 @@ function updateConnection() {
     if (status) {
         status.textContent = online
             ? '● متصل به اینترنت'
-            : '!!!بدون اینترنت';
+            : 'بدون اینترنت!!!';
 
         status.classList.toggle('offline', !online);
     }
