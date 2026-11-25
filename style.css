@@ -1091,7 +1091,7 @@ footer a:hover {
     }
 }
 
-/* تثبیت منوی سمت راست در دسکتاپ */
+/* چیدمان منو در تبلت و کامپیوتر */
 @media (min-width: 651px) {
     body {
         display: flex !important;
@@ -1101,6 +1101,7 @@ footer a:hover {
 
     .sidebar {
         order: 2 !important;
+        flex-shrink: 0;
         border-right: none !important;
         border-left: 1px solid var(--line) !important;
     }
@@ -1108,5 +1109,38 @@ footer a:hover {
     .main-content {
         order: 1 !important;
         direction: rtl !important;
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* چیدمان منو در گوشی */
+@media (max-width: 650px) {
+    body {
+        display: flex !important;
+        flex-direction: column !important;
+        direction: rtl !important;
+    }
+
+    .sidebar {
+        order: 1 !important;
+        width: 100% !important;
+        height: auto !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--line) !important;
+    }
+
+    .main-content {
+        order: 2 !important;
+        width: 100% !important;
+        min-width: 0;
+    }
+
+    .sidebar nav {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        white-space: nowrap;
     }
 }
