@@ -1171,8 +1171,14 @@ footer a:hover {
 }
 .price-source {
     display: inline-block;
-    margin-top: 1px;
+    margin-top: 7px;
     color: var(--gold);
-    font-size: 1px;
+    font-size: 10px;
+    text-decoration: none;
+    opacity: .85;
+}
+
+.price-source:hover {
     text-decoration: underline;
+    opacity: 1;
 }
