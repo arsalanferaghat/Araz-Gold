@@ -1090,3 +1090,101 @@ footer a:hover {
         font-size: clamp(24px, 8vw, 30px);
     }
 }
+
+/* =====================================================
+   ARAZ GOLD - DYNAMIC PERCENTAGE CONTROLS
+   ===================================================== */
+
+.percent-control {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    margin-top: 3px;
+}
+
+.percent-select {
+    width: 100%;
+    min-height: 43px;
+    background: #202326;
+    border: 1px solid #55452b;
+    color: var(--gold-light);
+    font-weight: 700;
+}
+
+.percent-control input[type="number"] {
+    width: 100%;
+    min-height: 43px;
+    direction: ltr;
+    text-align: center;
+    font-weight: 700;
+    color: var(--gold-light);
+}
+
+.percent-slider {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(
+        to left,
+        var(--gold),
+        #55452b
+    );
+    cursor: pointer;
+    direction: ltr;
+}
+
+.percent-slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: var(--gold-light);
+    border: 3px solid #302719;
+    box-shadow: 0 0 8px #d8ad5560;
+}
+
+.percent-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--gold-light);
+    border: 3px solid #302719;
+    box-shadow: 0 0 8px #d8ad5560;
+}
+
+.percent-amount {
+    color: var(--green);
+    font-size: 11px;
+    line-height: 2;
+    padding: 8px 10px;
+    background: #17221e;
+    border: 1px solid #29483b;
+    border-radius: 7px;
+    overflow-wrap: anywhere;
+}
+
+.percent-control input:focus,
+.percent-control select:focus {
+    border-color: var(--gold);
+}
+
+@media(max-width:650px) {
+    .percent-control {
+        gap: 9px;
+    }
+
+    .percent-amount {
+        font-size: 10px;
+    }
+
+    .percent-slider {
+        height: 8px;
+    }
+}
