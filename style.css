@@ -1188,3 +1188,25 @@ footer a:hover {
         height: 8px;
     }
 }
+.percent-control {
+    display: flex;
+    flex-direction: column;
+}
+
+.percent-control .percent-slider-row {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 12px;
+    direction: ltr;
+}
+
+.percent-control .percent-slider {
+    flex: 1;
+    min-width: 0;
+}
+
+.percent-control input[type="number"] {
+    width: 75px;
+    flex-shrink: 0;
+}
