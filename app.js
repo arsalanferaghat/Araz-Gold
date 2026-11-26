@@ -1,4 +1,3 @@
-
 'use strict';
 
 /* =========================================
@@ -73,7 +72,6 @@ function writeStorage(key, value) {
 
 let trades = readStorage(STORAGE.trades, []);
 let calculations = readStorage(STORAGE.calculations, []);
-
 
 let settings = {
     price: num(readStorage(STORAGE.price, 0)),
@@ -271,15 +269,15 @@ async function fetchOnlinePrice() {
         settings.price = newPrice;
         lastSyncedPrice = newPrice;
 
-// نرخ آنلاین دلار
-const newDollar = Number(data.usd);
+        // نرخ آنلاین دلار
+        const newDollar = Number(data.usd);
 
-if (
-    Number.isFinite(newDollar) &&
-    newDollar > 0
-) {
-    settings.dollar = newDollar;
-}
+        if (
+            Number.isFinite(newDollar) &&
+            newDollar > 0
+        ) {
+            settings.dollar = newDollar;
+        }
 
         // نرخ آنلاین اونس جهانی
         const newOunce = Number(data.ounce);
@@ -291,22 +289,21 @@ if (
             settings.ounce = newOunce;
         }
 
-// نرخ آنلاین تتر از نوبیتکس
-const newTether = Number(data.tether);
+        // نرخ آنلاین تتر از نوبیتکس
+        const newTether = Number(data.tether);
 
-if (
-    Number.isFinite(newTether) &&
-    newTether > 0
-) {
-    settings.tether = newTether;
-}
+        if (
+            Number.isFinite(newTether) &&
+            newTether > 0
+        ) {
+            settings.tether = newTether;
+        }
 
-       
         // زمان و منبع دریافت
         priceUpdated = data.updatedAt || new Date().toISOString();
         priceSource = 'Talasanj';
 
-        // ذخیره هر سه قیمت
+        // ذخیره قیمت‌ها
         savePriceData();
 
         // همگام‌سازی فیلدهای قیمت
@@ -442,12 +439,24 @@ function updatePriceModeButton() {
         : 'حالت دستی فعال است • تغییر به آنلاین';
 }
 
+/* =========================================
+   START PRICE UPDATES
+   ========================================= */
+
 function startPriceUpdates() {
     if (priceTimer) {
         clearInterval(priceTimer);
     }
 
-    if (priceMode !== 'online') return;
+    if (priceMode !== 'online') {
+        updatePriceStatus(
+            'حالت دستی فعال است',
+            'manual'
+        );
+
+        updatePriceModeButton();
+        return;
+    }
 
     if (navigator.onLine) {
         fetchOnlinePrice();
@@ -506,7 +515,6 @@ document.querySelectorAll('.nav[data-page]').forEach(button => {
 document.querySelectorAll('[data-go]').forEach(button => {
     button.addEventListener('click', () => show(button.dataset.go));
 });
-
 /* =========================================
    DASHBOARD
    ========================================= */
@@ -532,16 +540,16 @@ function renderDashboard() {
             : 'در انتظار دریافت قیمت'
     );
 
-safeText(
-    'hero-price-status',
-    priceMode === 'manual'
-        ? '● حالت ورود دستی قیمت'
-        : !navigator.onLine
-            ? '● آفلاین؛ آخرین قیمت ذخیره‌شده'
-            : priceSource === 'Talasanj'
-                ? '● دریافت خودکار قیمت آنلاین'
-                : '● در انتظار دریافت قیمت آنلاین'
-);
+    safeText(
+        'hero-price-status',
+        priceMode === 'manual'
+            ? '● حالت ورود دستی قیمت'
+            : !navigator.onLine
+                ? '● آفلاین؛ آخرین قیمت ذخیره‌شده'
+                : priceSource === 'Talasanj'
+                    ? '● دریافت خودکار قیمت آنلاین'
+                    : '● در انتظار دریافت قیمت آنلاین'
+    );
 
     safeText(
         'hero-price-updated',
@@ -562,18 +570,18 @@ safeText(
         ? money(settings.dollar)
         : 'ثبت نشده';
 
-    // نمایش سه قیمت اصلی در بالای داشبورد
+    // نمایش قیمت‌ها در بالای داشبورد
     safeText('hero-ounce-price', ounceValue);
     safeText('hero-dollar-price', dollarValue);
 
-   // نمایش قیمت تتر
-safeText(
-    'hero-tether-price',
-    settings.tether > 0
-        ? money(settings.tether)
-        : 'ثبت نشده'
-);
-   
+    // نمایش قیمت تتر
+    safeText(
+        'hero-tether-price',
+        settings.tether > 0
+            ? money(settings.tether)
+            : 'ثبت نشده'
+    );
+
     // بازار ایران
     safeHTML(
         'iran-price',
@@ -711,20 +719,8 @@ function renderSettings() {
         priceInput.readOnly = priceMode === 'online';
     }
 
-    if (priceMode === 'online') {
-        updatePriceStatus(
-            priceUpdated
-                ? 'آخرین دریافت: ' + formatPriceDate(priceUpdated)
-                : 'در انتظار دریافت قیمت آنلاین',
-            'success'
-        );
-    } else {
-        updatePriceStatus(
-            'حالت دستی فعال است',
-            'manual'
-        );
-    }
-
+    // وضعیت دریافت قیمت در renderSettings تغییر نمی‌کند؛
+    // تا پیام موفقیت یا خطای دریافت آنلاین با رندر عادی پاک نشود.
     updatePriceModeButton();
 }
 
@@ -930,7 +926,6 @@ function calculateExchange() {
         `
     };
 }
-
 /* =========================================
    CALCULATOR DISPLAY
    ========================================= */
@@ -1105,6 +1100,13 @@ $('save-price')?.addEventListener('click', () => {
 
     renderDashboard();
 
+    if (priceMode === 'manual') {
+        updatePriceStatus(
+            'قیمت دستی و تنظیمات با موفقیت ذخیره شدند',
+            'manual'
+        );
+    }
+
     notify(
         priceMode === 'manual'
             ? 'قیمت دستی و تنظیمات با موفقیت ذخیره شد.'
@@ -1232,17 +1234,18 @@ $('restore-data')?.addEventListener('change', async event => {
 function updateConnection() {
     const online = navigator.onLine;
 
-    safeText(
-        'offline-status',
-        online ? 'متصل به اینترنت' : 'حالت آفلاین'
-    );
+    const connectionMessage = online
+        ? 'متصل به اینترنت - قیمت به‌روز می‌باشد'
+        : 'حالت آفلاین';
+
+    safeText('offline-status', connectionMessage);
 
     const status = document.querySelector('.connection-status');
 
     if (status) {
         status.textContent = online
-            ? '● متصل به اینترنت'
-            : 'بدون اینترنت!!!';
+            ? '● متصل به اینترنت - قیمت به‌روز می‌باشد'
+            : '● بدون اینترنت';
 
         status.classList.toggle('offline', !online);
     }
