@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'araz-gold-v16';
+const CACHE_NAME = 'araz-gold-v17';
 
 const APP_FILES = [
     './',
