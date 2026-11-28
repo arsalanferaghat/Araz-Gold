@@ -1,4 +1,5 @@
-
+console.log('ARAZ GOLD APP.JS LOADED - VERSION TEST 1');
+alert('فایل app.js بارگذاری شد');
 async function fetchOnlinePrice() {
 
 console.log('ARAZ GOLD: تابع دریافت قیمت اجرا شد');
