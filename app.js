@@ -695,13 +695,27 @@ function renderPortfolio() {
    SETTINGS
    ========================================= */
 
+// درصدهای تنظیمات را وسط ویرایش کاربر بازنویسی نمی‌کند
+function setSettingPercent(id, value) {
+    const active = document.activeElement;
+
+    if (
+        active &&
+        (active.id === id || active.id === id + '-range')
+    ) {
+        return;
+    }
+
+    safeValue(id, value);
+}
+
 function renderSettings() {
     safeValue('setting-price', settings.price || '');
     safeValue('setting-ounce', settings.ounce || '');
     safeValue('setting-dollar', settings.dollar || '');
-    safeValue('setting-wage', settings.wage || 0);
-    safeValue('setting-profit', settings.profit || 0);
-    safeValue('setting-tax', settings.tax || 0);
+    setSettingPercent('setting-wage', settings.wage || 0);
+    setSettingPercent('setting-profit', settings.profit || 0);
+    setSettingPercent('setting-tax', settings.tax || 0);
 
     const priceInput = $('setting-price');
 
@@ -830,6 +844,7 @@ function calculateBuy() {
     if (weight <= 0 || purity <= 0 || price <= 0) {
         return {
             total: 0,
+            amounts: null,
             details: 'لطفاً وزن، عیار و قیمت را وارد کنید.'
         };
     }
@@ -843,6 +858,11 @@ function calculateBuy() {
 
     return {
         total,
+        amounts: {
+            wage: wageAmount,
+            profit: profitAmount,
+            tax: taxAmount
+        },
         details: `
             ارزش طلای خام: ${money(raw)} تومان
             اجرت: ${money(wageAmount)} تومان
@@ -863,6 +883,7 @@ function calculateSell() {
     if (weight <= 0 || purity <= 0 || price <= 0) {
         return {
             total: 0,
+            amounts: null,
             details: 'لطفاً وزن، عیار و قیمت را وارد کنید.'
         };
     }
@@ -873,6 +894,9 @@ function calculateSell() {
 
     return {
         total,
+        amounts: {
+            deduction: deductionAmount
+        },
         details: `
             ارزش طلای خام: ${money(raw)} تومان
             کسورات: ${money(deductionAmount)} تومان
@@ -902,6 +926,7 @@ function calculateExchange() {
     ) {
         return {
             total: 0,
+            amounts: null,
             details: 'لطفاً اطلاعات طلای قدیمی و جدید را کامل وارد کنید.'
         };
     }
@@ -918,6 +943,11 @@ function calculateExchange() {
 
     return {
         total: difference,
+        amounts: {
+            wage: wageAmount,
+            profit: profitAmount,
+            tax: taxAmount
+        },
         details: `
             ارزش طلای قدیمی: ${money(oldValue)} تومان
             ارزش طلای جدید: ${money(newValue)} تومان
@@ -934,23 +964,19 @@ function calculateExchange() {
    CALCULATOR DISPLAY
    ========================================= */
 
-function getActiveCalculation() {
+function updateCalculator() {
+    const results = {
+        buy: calculateBuy(),
+        sell: calculateSell(),
+        exchange: calculateExchange()
+    };
+
     const active = document.querySelector('.calc-tab.active');
     const type = active?.dataset.calc || 'buy';
 
-    if (type === 'sell') return calculateSell();
-    if (type === 'exchange') return calculateExchange();
-
-    return calculateBuy();
-}
-
-function updateCalculator() {
-    const result = getActiveCalculation();
+    const result = results[type] || results.buy;
 
     currentCalculation = result;
-
-    const active = document.querySelector('.calc-tab.active');
-    const type = active?.dataset.calc || 'buy';
 
     const titles = {
         buy: 'مبلغ نهایی خرید',
@@ -966,6 +992,8 @@ function updateCalculator() {
     );
 
     safeText('calculator-details', result.details);
+
+    showPercentAmounts(results);
 
     updateSellerComparison();
 }
@@ -1288,7 +1316,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 
 /* =========================================
-   PERCENT SLIDERS (0 - 20)
+   PERCENT CONTROLS
+   اسلایدر ۰ تا ۲۰ + ورود دستی تا ۱۰۰ + مبلغ درصد
    ========================================= */
 
 const PERCENT_FIELDS = [
@@ -1298,29 +1327,51 @@ const PERCENT_FIELDS = [
     'setting-wage', 'setting-profit', 'setting-tax'
 ];
 
-const PERCENT_MIN = 0;
-const PERCENT_MAX = 20;
+// فیلدهایی که زیرشان مبلغ تومانی درصد نمایش داده می‌شود
+const PERCENT_AMOUNT_MAP = {
+    'buy-wage': ['buy', 'wage'],
+    'buy-profit': ['buy', 'profit'],
+    'buy-tax': ['buy', 'tax'],
+    'sell-deduction': ['sell', 'deduction'],
+    'exchange-wage': ['exchange', 'wage'],
+    'exchange-profit': ['exchange', 'profit'],
+    'exchange-tax': ['exchange', 'tax']
+};
+
+const PERCENT_SLIDER_MAX = 20;
+const PERCENT_MANUAL_MAX = 100;
 const PERCENT_STEP = 0.1;
 
-function formatPercent(value) {
-    return new Intl.NumberFormat('fa-IR', {
-        maximumFractionDigits: 1
-    }).format(Number(value) || 0) + '٪';
+function clampPercent(value, max) {
+    return Math.min(max, Math.max(0, num(value)));
 }
 
-function updatePercentLabel(input) {
-    const out = document.getElementById(input.id + '-label');
+function syncPercentSlider(id) {
+    const input = $(id);
+    const slider = $(id + '-range');
 
-    if (out) out.textContent = formatPercent(input.value);
+    if (!input || !slider) return;
+
+    slider.value = clampPercent(input.value, PERCENT_SLIDER_MAX);
 }
 
 function refreshPercentSliders() {
-    PERCENT_FIELDS.forEach(id => {
-        const input = $(id);
+    PERCENT_FIELDS.forEach(syncPercentSlider);
+}
 
-        if (input && input.type === 'range') {
-            updatePercentLabel(input);
-        }
+function showPercentAmounts(results) {
+    Object.keys(PERCENT_AMOUNT_MAP).forEach(id => {
+        const el = $(id + '-amount');
+
+        if (!el) return;
+
+        const kind = PERCENT_AMOUNT_MAP[id][0];
+        const part = PERCENT_AMOUNT_MAP[id][1];
+        const amounts = results?.[kind]?.amounts;
+
+        el.textContent = amounts
+            ? 'مبلغ: ' + money(amounts[part]) + ' تومان'
+            : 'مبلغ: —';
     });
 }
 
@@ -1328,32 +1379,81 @@ function setupPercentSliders() {
     PERCENT_FIELDS.forEach(id => {
         const input = $(id);
 
-        if (!input || input.type === 'range') return;
+        if (!input || input.dataset.percentReady) return;
 
-        const startValue = Math.min(
-            PERCENT_MAX,
-            Math.max(PERCENT_MIN, num(input.value))
+        input.dataset.percentReady = '1';
+
+        const startValue = clampPercent(
+            input.value,
+            PERCENT_MANUAL_MAX
         );
 
-        input.type = 'range';
-        input.min = PERCENT_MIN;
-        input.max = PERCENT_MAX;
+        // کادر عدد (همان ورودی اصلی؛ منبع اصلی مقدار)
+        input.type = 'number';
+        input.min = 0;
+        input.max = PERCENT_MANUAL_MAX;
         input.step = PERCENT_STEP;
+        input.inputMode = 'decimal';
         input.value = startValue;
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'percent-slider';
+        // اسلایدر
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = id + '-range';
+        slider.className = 'percent-range';
+        slider.min = 0;
+        slider.max = PERCENT_SLIDER_MAX;
+        slider.step = PERCENT_STEP;
+        slider.value = clampPercent(startValue, PERCENT_SLIDER_MAX);
 
-        const out = document.createElement('output');
-        out.id = id + '-label';
-        out.className = 'percent-value';
+        // ساختار نمایش
+        const control = document.createElement('div');
+        control.className = 'percent-control';
 
-        input.replaceWith(wrapper);
-        wrapper.append(input, out);
+        const row = document.createElement('div');
+        row.className = 'percent-row';
 
-        input.addEventListener('input', () => updatePercentLabel(input));
+        const box = document.createElement('div');
+        box.className = 'percent-number';
 
-        updatePercentLabel(input);
+        const sign = document.createElement('span');
+        sign.textContent = '٪';
+
+        input.replaceWith(control);
+
+        box.append(input, sign);
+        row.append(slider, box);
+        control.append(row);
+
+        // مبلغ تومانی درصد
+        if (PERCENT_AMOUNT_MAP[id]) {
+            const amount = document.createElement('div');
+            amount.id = id + '-amount';
+            amount.className = 'percent-amount';
+            amount.textContent = 'مبلغ: —';
+            control.append(amount);
+        }
+
+        // کشیدن اسلایدر ← کادر عدد
+        slider.addEventListener('input', () => {
+            input.value = slider.value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // تایپ دستی ← اسلایدر
+        input.addEventListener('input', () => syncPercentSlider(id));
+
+        // پایان تایپ: اصلاح مقدار خالی یا خارج از محدوده
+        input.addEventListener('change', () => {
+            input.value = clampPercent(
+                input.value,
+                PERCENT_MANUAL_MAX
+            );
+
+            syncPercentSlider(id);
+
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
     });
 }
 
