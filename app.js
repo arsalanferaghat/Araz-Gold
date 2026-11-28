@@ -1,13 +1,28 @@
 
 async function fetchOnlinePrice() {
 
-    if (
-        priceMode !== 'online' ||
-        !navigator.onLine ||
-        priceRequestRunning
-    ) {
-        return false;
-    }
+console.log('ARAZ GOLD: تابع دریافت قیمت اجرا شد');
+
+console.log('وضعیت دریافت:', {
+    priceMode: priceMode,
+    online: navigator.onLine,
+    requestRunning: priceRequestRunning
+});
+
+if (priceMode !== 'online') {
+    console.warn('دریافت متوقف شد: حالت قیمت آنلاین نیست');
+    return false;
+}
+
+if (!navigator.onLine) {
+    console.warn('دریافت متوقف شد: اینترنت در دسترس نیست');
+    return false;
+}
+
+if (priceRequestRunning) {
+    console.warn('دریافت متوقف شد: درخواست قبلی هنوز در حال اجراست');
+    return false;
+}
 
     priceRequestRunning = true;
 
