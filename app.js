@@ -188,3 +188,11 @@ if (priceRequestRunning) {
         priceRequestRunning = false;
     }
 }
+console.log('ARAZ GOLD: انتهای فایل app.js اجرا شد');
+console.log('وضعیت اولیه:', {
+    priceMode: typeof priceMode !== 'undefined' ? priceMode : 'تعریف نشده',
+    online: navigator.onLine,
+    requestRunning: typeof priceRequestRunning !== 'undefined'
+        ? priceRequestRunning
+        : 'تعریف نشده'
+});
