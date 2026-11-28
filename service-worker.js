@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'araz-gold-v26';
+const CACHE_NAME = 'araz-gold-v27';
 
 const PRICE_API_HOST = 'araz-gold-price.arsalanfaraghat8.workers.dev';
 
