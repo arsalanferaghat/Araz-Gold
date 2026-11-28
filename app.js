@@ -11,6 +11,8 @@ const PRICE_API =
     'https://araz-gold-price.arsalanfaraghat8.workers.dev/';
 
 const PRICE_REFRESH_INTERVAL = 60000;
+const PRICE_FETCH_TIMEOUT = 12000;
+const PRICE_RETRY_DELAY = 10000;
 
 const STORAGE = {
     trades: 'ag_trades',
@@ -24,6 +26,7 @@ const STORAGE = {
     calculations: 'ag_calculations',
     priceMode: 'ag_price_mode',
     priceUpdated: 'ag_price_updated',
+    priceFetched: 'ag_price_fetched',
     priceSource: 'ag_price_source'
 };
 
@@ -86,11 +89,15 @@ let settings = {
 
 let priceMode = readStorage(STORAGE.priceMode, 'online');
 let priceUpdated = readStorage(STORAGE.priceUpdated, '');
+let priceFetchedAt = readStorage(STORAGE.priceFetched, '');
 let priceSource = readStorage(STORAGE.priceSource, 'manual');
 
 let lastSyncedPrice = settings.price;
 let currentCalculation = null;
 let priceRequestRunning = false;
+let priceRequestStartedAt = 0;
+let priceRequestId = 0;
+let priceRetryTimer = null;
 let priceTimer = null;
 
 /* =========================================
@@ -153,6 +160,16 @@ function formatPriceDate(value) {
     return date.toLocaleString('fa-IR');
 }
 
+function formatClock(value) {
+    if (!value) return '';
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return '';
+
+    return date.toLocaleTimeString('fa-IR');
+}
+
 function getBalance() {
     return trades.reduce((sum, trade) => {
         return sum + (
@@ -189,6 +206,7 @@ function savePriceData() {
     writeStorage(STORAGE.dollar, settings.dollar);
     writeStorage(STORAGE.tether, settings.tether);
     writeStorage(STORAGE.priceUpdated, priceUpdated);
+    writeStorage(STORAGE.priceFetched, priceFetchedAt);
     writeStorage(STORAGE.priceSource, priceSource);
     writeStorage(STORAGE.priceMode, priceMode);
 }
@@ -227,23 +245,47 @@ function syncPriceInputs(oldPrice, newPrice) {
    ONLINE PRICE FETCH
    ========================================= */
 
+function scheduleRetry() {
+    if (priceRetryTimer) return;
+
+    priceRetryTimer = setTimeout(() => {
+        priceRetryTimer = null;
+        refreshPriceNow();
+    }, PRICE_RETRY_DELAY);
+}
+
 async function fetchOnlinePrice() {
-    if (
-        priceMode !== 'online' ||
-        !navigator.onLine ||
-        priceRequestRunning
-    ) {
+    if (priceMode !== 'online' || !navigator.onLine) {
         return false;
     }
 
+    // درخواست قبلی در جریان است؛ فقط اگر گیر کرده باشد رها می‌شود
+    if (priceRequestRunning) {
+        const stuck =
+            Date.now() - priceRequestStartedAt >
+            PRICE_FETCH_TIMEOUT + 3000;
+
+        if (!stuck) return false;
+    }
+
+    const requestId = ++priceRequestId;
+
     priceRequestRunning = true;
+    priceRequestStartedAt = Date.now();
+
+    const controller = new AbortController();
+
+    const timeoutId = setTimeout(() => {
+        controller.abort();
+    }, PRICE_FETCH_TIMEOUT);
 
     updatePriceStatus('در حال دریافت قیمت‌ها...', 'loading');
 
     try {
-        const response = await fetch(PRICE_API, {
+        const response = await fetch(PRICE_API + '?_=' + Date.now(), {
             method: 'GET',
             cache: 'no-store',
+            signal: controller.signal,
             headers: {
                 'Accept': 'application/json'
             }
@@ -300,8 +342,9 @@ async function fetchOnlinePrice() {
             settings.tether = newTether;
         }
 
-        // زمان و منبع دریافت
+        // زمان نرخ منبع، زمان دریافت و منبع
         priceUpdated = data.updatedAt || new Date().toISOString();
+        priceFetchedAt = new Date().toISOString();
         priceSource = 'Talasanj';
 
         // ذخیره هر چهار قیمت
@@ -323,19 +366,39 @@ async function fetchOnlinePrice() {
     } catch (error) {
         console.warn('Online price error:', error);
 
+        // اول نمایش، بعد پیام خطا (تا پیام خطا پاک نشود)
+        render();
+
         updatePriceStatus(
-            settings.price > 0
-                ? 'عدم دریافت نرخ جدید؛ آخرین قیمت‌های ذخیره‌شده نمایش داده می‌شوند'
-                : 'دریافت قیمت ناموفق بود',
+            error.name === 'AbortError'
+                ? 'مهلت دریافت قیمت تمام شد؛ چند ثانیه دیگر دوباره تلاش می‌شود'
+                : settings.price > 0
+                    ? 'عدم دریافت نرخ جدید؛ آخرین قیمت‌های ذخیره‌شده نمایش داده می‌شوند'
+                    : 'دریافت قیمت ناموفق بود؛ دوباره تلاش می‌شود',
             'error'
         );
 
-        render();
+        scheduleRetry();
 
         return false;
 
     } finally {
-        priceRequestRunning = false;
+        clearTimeout(timeoutId);
+
+        if (requestId === priceRequestId) {
+            priceRequestRunning = false;
+        }
+    }
+}
+
+// دریافت فوری قیمت (فقط وقتی صفحه دیده می‌شود)
+function refreshPriceNow() {
+    if (
+        priceMode === 'online' &&
+        navigator.onLine &&
+        document.visibilityState === 'visible'
+    ) {
+        fetchOnlinePrice();
     }
 }
 
@@ -458,15 +521,7 @@ function startPriceUpdates() {
         );
     }
 
-    priceTimer = setInterval(() => {
-        if (
-            priceMode === 'online' &&
-            navigator.onLine &&
-            document.visibilityState === 'visible'
-        ) {
-            fetchOnlinePrice();
-        }
-    }, PRICE_REFRESH_INTERVAL);
+    priceTimer = setInterval(refreshPriceNow, PRICE_REFRESH_INTERVAL);
 }
 
 /* =========================================
@@ -544,7 +599,10 @@ function renderDashboard() {
     safeText(
         'hero-price-updated',
         priceUpdated
-            ? 'آخرین به‌روزرسانی: ' + formatPriceDate(priceUpdated)
+            ? 'زمان نرخ منبع: ' + formatPriceDate(priceUpdated) +
+              (priceFetchedAt
+                  ? ' • آخرین دریافت: ' + formatClock(priceFetchedAt)
+                  : '')
             : 'هنوز قیمتی دریافت نشده است'
     );
 
@@ -1292,15 +1350,10 @@ function updateConnection() {
 window.addEventListener('online', updateConnection);
 window.addEventListener('offline', updateConnection);
 
-document.addEventListener('visibilitychange', () => {
-    if (
-        document.visibilityState === 'visible' &&
-        navigator.onLine &&
-        priceMode === 'online'
-    ) {
-        fetchOnlinePrice();
-    }
-});
+// برگشت به برنامه (گوشی): دریافت فوری قیمت
+document.addEventListener('visibilitychange', refreshPriceNow);
+window.addEventListener('focus', refreshPriceNow);
+window.addEventListener('pageshow', refreshPriceNow);
 
 /* =========================================
    PWA SERVICE WORKER
