@@ -196,36 +196,30 @@ console.log('وضعیت اولیه:', {
         ? priceRequestRunning
         : 'تعریف نشده'
 });
-// بررسی و شروع دریافت قیمت آنلاین
-window.addEventListener('load', async function () {
+// بررسی وضعیت اجرای برنامه و دریافت قیمت
+window.addEventListener('load', function () {
 
-    console.log('ARAZ GOLD: بررسی شروع دریافت قیمت');
+    console.log('ARAZ GOLD: رویداد LOAD اجرا شد');
 
-    try {
+    console.log('وضعیت متغیرها:', {
+        priceModeType: typeof priceMode,
+        requestType: typeof priceRequestRunning,
+        settingsType: typeof settings,
+        apiType: typeof PRICE_API
+    });
 
-        console.log('حالت قیمت:', priceMode);
-
-        if (priceMode === 'online') {
-
-            console.log('ARAZ GOLD: شروع دریافت قیمت');
-
-            await fetchOnlinePrice();
-
-        } else {
-
-            console.warn(
-                'ARAZ GOLD: حالت قیمت روی آنلاین نیست'
-            );
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            'ARAZ GOLD: خطا در شروع دریافت قیمت',
-            error
-        );
-
+    if (typeof priceMode === 'undefined') {
+        console.error('خطا: priceMode در این محدوده تعریف نشده است');
+        return;
     }
+
+    if (priceMode !== 'online') {
+        console.warn('حالت دریافت قیمت آنلاین نیست:', priceMode);
+        return;
+    }
+
+    console.log('ARAZ GOLD: تلاش برای دریافت قیمت');
+
+    fetchOnlinePrice();
 
 });
