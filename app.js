@@ -226,6 +226,7 @@ function syncPriceInputs(oldPrice, newPrice) {
    ONLINE PRICE FETCH
    ========================================= */
 
+
 async function fetchOnlinePrice() {
     if (
         priceMode !== 'online' ||
@@ -237,14 +238,26 @@ async function fetchOnlinePrice() {
 
     priceRequestRunning = true;
 
-    updatePriceStatus('در حال دریافت قیمت‌ها...', 'loading');
+    const controller = new AbortController();
+
+    const timeoutId = setTimeout(() => {
+        controller.abort();
+    }, 15000);
+
+    updatePriceStatus('در حال دریافت قیمت‌های جدید...', 'loading');
 
     try {
-        const response = await fetch(PRICE_API, {
+        const requestUrl =
+            PRICE_API + '?_=' + Date.now();
+
+        const response = await fetch(requestUrl, {
             method: 'GET',
             cache: 'no-store',
+            signal: controller.signal,
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store',
+                'Pragma': 'no-cache'
             }
         });
 
@@ -263,69 +276,54 @@ async function fetchOnlinePrice() {
         }
 
         const oldPrice = settings.price;
-        const newPrice = Number(data.gram18);
 
-        // قیمت طلای ۱۸ عیار
-        settings.price = newPrice;
-        lastSyncedPrice = newPrice;
+        settings.price = Number(data.gram18);
+        lastSyncedPrice = settings.price;
 
-        // نرخ آنلاین دلار
-        const newDollar = Number(data.usd);
-
-        if (
-            Number.isFinite(newDollar) &&
-            newDollar > 0
-        ) {
-            settings.dollar = newDollar;
+        if (Number(data.usd) > 0) {
+            settings.dollar = Number(data.usd);
         }
 
-        // نرخ آنلاین اونس جهانی
-        const newOunce = Number(data.ounce);
-
-        if (
-            Number.isFinite(newOunce) &&
-            newOunce > 0
-        ) {
-            settings.ounce = newOunce;
+        if (Number(data.ounce) > 0) {
+            settings.ounce = Number(data.ounce);
         }
 
-        // نرخ آنلاین تتر از نوبیتکس
-        const newTether = Number(data.tether);
-
-        if (
-            Number.isFinite(newTether) &&
-            newTether > 0
-        ) {
-            settings.tether = newTether;
+        if (Number(data.tether) > 0) {
+            settings.tether = Number(data.tether);
         }
 
-        // زمان و منبع دریافت
         priceUpdated = data.updatedAt || new Date().toISOString();
         priceSource = 'Talasanj';
 
-        // ذخیره قیمت‌ها
         savePriceData();
 
-        // همگام‌سازی فیلدهای قیمت
-        syncPriceInputs(oldPrice, newPrice);
+        syncPriceInputs(oldPrice, settings.price);
 
-        // به‌روزرسانی تمام قسمت‌ها
         render();
 
         updatePriceStatus(
-            'هر چهار نرخ با موفقیت به‌روزرسانی شدند',
+            'قیمت‌ها با موفقیت دریافت شدند',
             'success'
         );
+
+        console.log('ARAZ GOLD PRICE UPDATE:', {
+            receivedAt: new Date().toISOString(),
+            sourceUpdatedAt: data.updatedAt,
+            goldPrice: data.gram18,
+            dollar: data.usd,
+            ounce: data.ounce,
+            tether: data.tether
+        });
 
         return true;
 
     } catch (error) {
-        console.warn('Online price error:', error);
+        console.warn('ARAZ GOLD PRICE ERROR:', error);
 
         updatePriceStatus(
-            settings.price > 0
-                ? 'عدم دریافت نرخ جدید؛ آخرین قیمت‌های ذخیره‌شده نمایش داده می‌شوند'
-                : 'دریافت قیمت ناموفق بود',
+            error.name === 'AbortError'
+                ? 'مهلت دریافت قیمت تمام شد؛ تلاش مجدد انجام می‌شود'
+                : 'دریافت قیمت ناموفق بود؛ تلاش مجدد انجام می‌شود',
             'error'
         );
 
@@ -334,6 +332,7 @@ async function fetchOnlinePrice() {
         return false;
 
     } finally {
+        clearTimeout(timeoutId);
         priceRequestRunning = false;
     }
 }
