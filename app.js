@@ -1,4 +1,3 @@
-
 'use strict';
 
 /* =========================================
@@ -73,7 +72,6 @@ function writeStorage(key, value) {
 
 let trades = readStorage(STORAGE.trades, []);
 let calculations = readStorage(STORAGE.calculations, []);
-
 
 let settings = {
     price: num(readStorage(STORAGE.price, 0)),
@@ -271,15 +269,15 @@ async function fetchOnlinePrice() {
         settings.price = newPrice;
         lastSyncedPrice = newPrice;
 
-// نرخ آنلاین دلار
-const newDollar = Number(data.usd);
+        // نرخ آنلاین دلار
+        const newDollar = Number(data.usd);
 
-if (
-    Number.isFinite(newDollar) &&
-    newDollar > 0
-) {
-    settings.dollar = newDollar;
-}
+        if (
+            Number.isFinite(newDollar) &&
+            newDollar > 0
+        ) {
+            settings.dollar = newDollar;
+        }
 
         // نرخ آنلاین اونس جهانی
         const newOunce = Number(data.ounce);
@@ -291,22 +289,21 @@ if (
             settings.ounce = newOunce;
         }
 
-// نرخ آنلاین تتر از نوبیتکس
-const newTether = Number(data.tether);
+        // نرخ آنلاین تتر از نوبیتکس
+        const newTether = Number(data.tether);
 
-if (
-    Number.isFinite(newTether) &&
-    newTether > 0
-) {
-    settings.tether = newTether;
-}
+        if (
+            Number.isFinite(newTether) &&
+            newTether > 0
+        ) {
+            settings.tether = newTether;
+        }
 
-       
         // زمان و منبع دریافت
         priceUpdated = data.updatedAt || new Date().toISOString();
         priceSource = 'Talasanj';
 
-        // ذخیره هر سه قیمت
+        // ذخیره قیمت‌ها
         savePriceData();
 
         // همگام‌سازی فیلدهای قیمت
@@ -442,12 +439,24 @@ function updatePriceModeButton() {
         : 'حالت دستی فعال است • تغییر به آنلاین';
 }
 
+/* =========================================
+   START PRICE UPDATES
+   ========================================= */
+
 function startPriceUpdates() {
     if (priceTimer) {
         clearInterval(priceTimer);
     }
 
-    if (priceMode !== 'online') return;
+    if (priceMode !== 'online') {
+        updatePriceStatus(
+            'حالت دستی فعال است',
+            'manual'
+        );
+
+        updatePriceModeButton();
+        return;
+    }
 
     if (navigator.onLine) {
         fetchOnlinePrice();
@@ -506,7 +515,6 @@ document.querySelectorAll('.nav[data-page]').forEach(button => {
 document.querySelectorAll('[data-go]').forEach(button => {
     button.addEventListener('click', () => show(button.dataset.go));
 });
-
 /* =========================================
    DASHBOARD
    ========================================= */
@@ -562,18 +570,18 @@ function renderDashboard() {
         ? money(settings.dollar)
         : 'ثبت نشده';
 
-    // نمایش سه قیمت اصلی در بالای داشبورد
+    // نمایش قیمت‌ها در بالای داشبورد
     safeText('hero-ounce-price', ounceValue);
     safeText('hero-dollar-price', dollarValue);
 
-   // نمایش قیمت تتر
-safeText(
-    'hero-tether-price',
-    settings.tether > 0
-        ? money(settings.tether)
-        : 'ثبت نشده'
-);
-   
+    // نمایش قیمت تتر
+    safeText(
+        'hero-tether-price',
+        settings.tether > 0
+            ? money(settings.tether)
+            : 'ثبت نشده'
+    );
+
     // بازار ایران
     safeHTML(
         'iran-price',
@@ -711,20 +719,8 @@ function renderSettings() {
         priceInput.readOnly = priceMode === 'online';
     }
 
-    if (priceMode === 'online') {
-        updatePriceStatus(
-            priceUpdated
-                ? 'آخرین دریافت: ' + formatPriceDate(priceUpdated)
-                : 'در انتظار دریافت قیمت آنلاین',
-            'success'
-        );
-    } else {
-        updatePriceStatus(
-            'حالت دستی فعال است',
-            'manual'
-        );
-    }
-
+    // وضعیت دریافت قیمت در renderSettings تغییر نمی‌کند؛
+    // تا پیام موفقیت یا خطای دریافت آنلاین با رندر عادی پاک نشود.
     updatePriceModeButton();
 }
 
@@ -930,7 +926,6 @@ function calculateExchange() {
         `
     };
 }
-
 /* =========================================
    CALCULATOR DISPLAY
    ========================================= */
@@ -1105,6 +1100,13 @@ $('save-price')?.addEventListener('click', () => {
 
     renderDashboard();
 
+    if (priceMode === 'manual') {
+        updatePriceStatus(
+            'قیمت دستی و تنظیمات با موفقیت ذخیره شدند',
+            'manual'
+        );
+    }
+
     notify(
         priceMode === 'manual'
             ? 'قیمت دستی و تنظیمات با موفقیت ذخیره شد.'
@@ -1232,17 +1234,18 @@ $('restore-data')?.addEventListener('change', async event => {
 function updateConnection() {
     const online = navigator.onLine;
 
-    safeText(
-        'offline-status',
-        online ? 'متصل به اینترنت' : 'حالت آفلاین'
-    );
+    const connectionMessage = online
+        ? 'متصل به اینترنت - قیمت به‌روز می‌باشد'
+        : 'حالت آفلاین';
+
+    safeText('offline-status', connectionMessage);
 
     const status = document.querySelector('.connection-status');
 
     if (status) {
         status.textContent = online
-            ? 'متصل به اینترنت'
-            : 'بدون اینترنت';
+            ? '● متصل به اینترنت - قیمت به‌روز می‌باشد'
+            : '● بدون اینترنت';
 
         status.classList.toggle('offline', !online);
     }
@@ -1305,3 +1308,608 @@ show('dashboard');
 syncPriceInputs(0, settings.price);
 
 startPriceUpdates();
+
+/* =====================================================
+   ARAZ GOLD - DYNAMIC PERCENTAGE CONTROLS
+   Presets + Range Slider + Custom Percentage
+   ===================================================== */
+
+// فقط در اولین اجرای نسخه جدید، درصدهای پیش‌فرض ثبت می‌شوند.
+// پس از آن حتی درصد صفر انتخابی کاربر نیز حفظ خواهد شد.
+const PERCENT_DEFAULTS_KEY = 'ag_percent_defaults_initialized';
+
+if (!localStorage.getItem(PERCENT_DEFAULTS_KEY)) {
+    settings.wage = 10;
+    settings.profit = 7;
+    settings.tax = 10;
+
+    writeStorage(STORAGE.wage, 10);
+    writeStorage(STORAGE.profit, 7);
+    writeStorage(STORAGE.tax, 10);
+
+    localStorage.setItem(PERCENT_DEFAULTS_KEY, '1');
+}
+
+// تنظیمات درصدها
+const PERCENT_FIELDS = [
+    'buy-wage',
+    'buy-profit',
+    'buy-tax',
+    'sell-deduction',
+    'exchange-wage',
+    'exchange-profit',
+    'exchange-tax',
+    'setting-wage',
+    'setting-profit',
+    'setting-tax'
+];
+
+const PERCENT_PRESETS = [
+    0, 1, 2, 3, 4, 5, 7, 10, 15, 20, 25, 30, 40, 50, 75, 100
+];
+
+const PERCENT_DEFAULTS = {
+    'buy-wage': 10,
+    'buy-profit': 7,
+    'buy-tax': 10,
+    'sell-deduction': 0,
+    'exchange-wage': 10,
+    'exchange-profit': 7,
+    'exchange-tax': 10,
+    'setting-wage': 10,
+    'setting-profit': 7,
+    'setting-tax': 10
+};
+
+function getPercent(id) {
+    return Math.max(0, num($(id)?.value));
+}
+
+function dispatchPercentInput(input) {
+    input.dispatchEvent(new Event('input', {
+        bubbles: true
+    }));
+}
+
+function createPercentControl(id) {
+    const input = $(id);
+
+    if (!input || input.dataset.percentReady === '1') {
+        return;
+    }
+
+    input.dataset.percentReady = '1';
+
+    input.type = 'number';
+    input.min = '0';
+    input.max = '100';
+    input.step = '0.01';
+
+    const initialValue = input.value !== ''
+        ? num(input.value)
+        : PERCENT_DEFAULTS[id];
+
+    input.value = initialValue;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'percent-control';
+
+    const preset = document.createElement('select');
+    preset.className = 'percent-select';
+    preset.setAttribute('aria-label', 'انتخاب درصد آماده');
+
+    preset.innerHTML = `
+        <option value="custom">درصد دلخواه</option>
+        ${PERCENT_PRESETS.map(value => `
+            <option value="${value}">${value} درصد</option>
+        `).join('')}
+    `;
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'percent-slider';
+    slider.min = '0';
+    slider.max = '100';
+    slider.step = '0.1';
+    slider.value = initialValue;
+
+    const amount = document.createElement('div');
+    amount.className = 'percent-amount';
+    amount.textContent = 'مبلغ متناظر: در انتظار محاسبه';
+
+    const originalParent = input.parentNode;
+
+    originalParent.insertBefore(wrapper, input);
+
+    wrapper.appendChild(preset);
+    wrapper.appendChild(input);
+    wrapper.appendChild(slider);
+    wrapper.appendChild(amount);
+
+    function syncPreset() {
+        const value = num(input.value);
+
+        const found = PERCENT_PRESETS.some(
+            item => Math.abs(item - value) < 0.0001
+        );
+
+        preset.value = found ? String(value) : 'custom';
+    }
+
+    preset.addEventListener('change', () => {
+        if (preset.value === 'custom') {
+            input.focus();
+            return;
+        }
+
+        input.value = preset.value;
+        slider.value = preset.value;
+
+        dispatchPercentInput(input);
+    });
+
+    slider.addEventListener('input', () => {
+        input.value = slider.value;
+        syncPreset();
+        dispatchPercentInput(input);
+    });
+
+    input.addEventListener('input', () => {
+        let value = num(input.value);
+
+        if (value > 100) {
+            value = 100;
+            input.value = 100;
+        }
+
+        slider.value = Math.min(100, Math.max(0, value));
+
+        syncPreset();
+
+        updatePercentAmounts();
+    });
+
+    syncPreset();
+
+    if (id.startsWith('setting-')) {
+        input.addEventListener('input', () => {
+            const settingName = id.replace('setting-', '');
+
+            settings[settingName] = getPercent(id);
+        });
+    }
+}
+
+// ساخت کنترل‌های درصدی
+PERCENT_FIELDS.forEach(createPercentControl);
+
+/* =====================================================
+   DEFAULT PERCENTAGES IN CALCULATOR
+   ===================================================== */
+
+function applyDefaultPercentages() {
+    const mapping = {
+        'buy-wage': settings.wage,
+        'buy-profit': settings.profit,
+        'buy-tax': settings.tax,
+
+        'exchange-wage': settings.wage,
+        'exchange-profit': settings.profit,
+        'exchange-tax': settings.tax,
+
+        'setting-wage': settings.wage,
+        'setting-profit': settings.profit,
+        'setting-tax': settings.tax
+    };
+
+    Object.entries(mapping).forEach(([id, value]) => {
+        const input = $(id);
+
+        if (!input) return;
+
+        input.value = value;
+        const slider = input.parentElement?.querySelector('.percent-slider');
+
+        if (slider) slider.value = value;
+
+        const preset = input.parentElement?.querySelector('.percent-select');
+
+        if (preset) {
+            preset.value = PERCENT_PRESETS.includes(value)
+                ? String(value)
+                : 'custom';
+        }
+    });
+
+    PERCENT_FIELDS.forEach(id => {
+        const input = $(id);
+        if (input) {
+            input.dispatchEvent(new Event('input', {
+                bubbles: true
+            }));
+        }
+    });
+}
+
+/* =====================================================
+   CALCULATION BASES FOR PERCENT AMOUNTS
+   ===================================================== */
+
+function getPercentBases() {
+    const active = document.querySelector('.calc-tab.active');
+    const type = active?.dataset.calc || 'buy';
+
+    const result = {};
+
+    if (type === 'buy') {
+        const raw = rawGoldValue(
+            $('buy-weight')?.value,
+            $('buy-purity')?.value,
+            $('buy-price')?.value
+        );
+
+        const wageAmount = percentAmount(
+            raw,
+            getPercent('buy-wage')
+        );
+
+        const profitBase = raw + wageAmount;
+
+        const profitAmount = percentAmount(
+            profitBase,
+            getPercent('buy-profit')
+        );
+
+        result['buy-wage'] = {
+            base: raw,
+            title: 'ارزش طلای خام'
+        };
+
+        result['buy-profit'] = {
+            base: profitBase,
+            title: 'ارزش خام + اجرت'
+        };
+
+        result['buy-tax'] = {
+            base: wageAmount + profitAmount,
+            title: 'اجرت + سود'
+        };
+    }
+
+    if (type === 'sell') {
+        const raw = rawGoldValue(
+            $('sell-weight')?.value,
+            $('sell-purity')?.value,
+            $('sell-price')?.value
+        );
+
+        result['sell-deduction'] = {
+            base: raw,
+            title: 'ارزش طلای خام'
+        };
+    }
+
+    if (type === 'exchange') {
+        const newValue = rawGoldValue(
+            $('new-weight')?.value,
+            $('new-purity')?.value,
+            $('exchange-price')?.value
+        );
+
+        const wageAmount = percentAmount(
+            newValue,
+            getPercent('exchange-wage')
+        );
+
+        const profitBase = newValue + wageAmount;
+
+        const profitAmount = percentAmount(
+            profitBase,
+            getPercent('exchange-profit')
+        );
+
+        result['exchange-wage'] = {
+            base: newValue,
+            title: 'ارزش طلای جدید'
+        };
+
+        result['exchange-profit'] = {
+            base: profitBase,
+            title: 'ارزش جدید + اجرت'
+        };
+
+        result['exchange-tax'] = {
+            base: wageAmount + profitAmount,
+            title: 'اجرت + سود'
+        };
+    }
+
+    return result;
+}
+
+/* =====================================================
+   LIVE PERCENT AMOUNTS
+   ===================================================== */
+
+function updatePercentAmounts() {
+    const bases = getPercentBases();
+
+    Object.entries(bases).forEach(([id, info]) => {
+        const input = $(id);
+
+        if (!input) return;
+
+        const amountElement = input.parentElement?.querySelector(
+            '.percent-amount'
+        );
+
+        if (!amountElement) return;
+
+        const percent = getPercent(id);
+        const amount = percentAmount(info.base, percent);
+
+        amountElement.textContent =
+            `مبلغ ${percent}%: ${money(amount)} تومان | پایه: ${info.title}`;
+    });
+
+    ['setting-wage', 'setting-profit', 'setting-tax'].forEach(id => {
+        const input = $(id);
+
+        if (!input) return;
+
+        const amountElement = input.parentElement?.querySelector(
+            '.percent-amount'
+        );
+
+        if (amountElement) {
+            amountElement.textContent =
+                'درصد پیش‌فرض برای محاسبات آینده';
+        }
+    });
+}
+
+/* =====================================================
+   UPDATED BUY CALCULATION
+   ===================================================== */
+
+function calculateBuy() {
+    const weight = num($('buy-weight')?.value);
+    const purity = num($('buy-purity')?.value);
+    const price = num($('buy-price')?.value);
+
+    const wage = getPercent('buy-wage');
+    const profit = getPercent('buy-profit');
+    const tax = getPercent('buy-tax');
+
+    const extra = num($('buy-extra')?.value);
+
+    if (weight <= 0 || purity <= 0 || price <= 0) {
+        return {
+            total: 0,
+            details: 'لطفاً وزن، عیار و قیمت را وارد کنید.'
+        };
+    }
+
+    const raw = rawGoldValue(weight, purity, price);
+
+    const wageAmount = percentAmount(raw, wage);
+
+    const profitBase = raw + wageAmount;
+    const profitAmount = percentAmount(profitBase, profit);
+
+    const taxBase = wageAmount + profitAmount;
+    const taxAmount = percentAmount(taxBase, tax);
+
+    const total =
+        raw +
+        wageAmount +
+        profitAmount +
+        taxAmount +
+        extra;
+
+    return {
+        total,
+        details: `
+ارزش طلای خام: ${money(raw)} تومان
+اجرت ساخت (${wage}%): ${money(wageAmount)} تومان
+پایه محاسبه اجرت: ${money(raw)} تومان
+سود فروشنده (${profit}%): ${money(profitAmount)} تومان
+پایه محاسبه سود: ${money(profitBase)} تومان
+مالیات (${tax}%): ${money(taxAmount)} تومان
+پایه محاسبه مالیات: ${money(taxBase)} تومان
+هزینه اضافی: ${money(extra)} تومان
+
+مبلغ نهایی خرید: ${money(total)} تومان
+        `
+    };
+}
+
+/* =====================================================
+   UPDATED SELL CALCULATION
+   ===================================================== */
+
+function calculateSell() {
+    const weight = num($('sell-weight')?.value);
+    const purity = num($('sell-purity')?.value);
+    const price = num($('sell-price')?.value);
+
+    const deduction = getPercent('sell-deduction');
+    const extra = num($('sell-extra')?.value);
+
+    if (weight <= 0 || purity <= 0 || price <= 0) {
+        return {
+            total: 0,
+            details: 'لطفاً وزن، عیار و قیمت را وارد کنید.'
+        };
+    }
+
+    const raw = rawGoldValue(weight, purity, price);
+
+    const deductionAmount = percentAmount(raw, deduction);
+
+    const total = raw - deductionAmount - extra;
+
+    return {
+        total,
+        details: `
+ارزش طلای خام: ${money(raw)} تومان
+کسورات (${deduction}%): ${money(deductionAmount)} تومان
+پایه محاسبه کسورات: ${money(raw)} تومان
+هزینه اضافی: ${money(extra)} تومان
+
+مبلغ خالص دریافتی شما: ${money(total)} تومان
+        `
+    };
+}
+
+/* =====================================================
+   UPDATED EXCHANGE CALCULATION
+   ===================================================== */
+
+function calculateExchange() {
+    const oldWeight = num($('old-weight')?.value);
+    const oldPurity = num($('old-purity')?.value);
+
+    const newWeight = num($('new-weight')?.value);
+    const newPurity = num($('new-purity')?.value);
+
+    const price = num($('exchange-price')?.value);
+
+    const wage = getPercent('exchange-wage');
+    const profit = getPercent('exchange-profit');
+    const tax = getPercent('exchange-tax');
+
+    const extra = num($('exchange-extra')?.value);
+
+    if (
+        oldWeight <= 0 ||
+        oldPurity <= 0 ||
+        newWeight <= 0 ||
+        newPurity <= 0 ||
+        price <= 0
+    ) {
+        return {
+            total: 0,
+            details: 'لطفاً اطلاعات طلای قدیمی و جدید را کامل وارد کنید.'
+        };
+    }
+
+    const oldValue = rawGoldValue(oldWeight, oldPurity, price);
+    const newValue = rawGoldValue(newWeight, newPurity, price);
+
+    const wageAmount = percentAmount(newValue, wage);
+
+    const profitBase = newValue + wageAmount;
+    const profitAmount = percentAmount(profitBase, profit);
+
+    const taxBase = wageAmount + profitAmount;
+    const taxAmount = percentAmount(taxBase, tax);
+
+    const newTotal =
+        newValue +
+        wageAmount +
+        profitAmount +
+        taxAmount +
+        extra;
+
+    const difference = newTotal - oldValue;
+
+    const resultText = difference > 0
+        ? `مبلغی که باید پرداخت کنید: ${money(difference)} تومان`
+        : difference < 0
+            ? `مبلغی که باید دریافت کنید: ${money(Math.abs(difference))} تومان`
+            : 'معامله بدون پرداخت مابه‌التفاوت است.';
+
+    return {
+        total: difference,
+        details: `
+ارزش طلای قدیمی: ${money(oldValue)} تومان
+ارزش طلای جدید: ${money(newValue)} تومان
+اجرت ساخت (${wage}%): ${money(wageAmount)} تومان
+سود فروشنده (${profit}%): ${money(profitAmount)} تومان
+مالیات (${tax}%): ${money(taxAmount)} تومان
+هزینه اضافی: ${money(extra)} تومان
+
+قیمت نهایی طلای جدید: ${money(newTotal)} تومان
+
+${resultText}
+        `
+    };
+}
+
+/* =====================================================
+   UPDATED CALCULATOR DISPLAY
+   ===================================================== */
+
+function updateCalculator() {
+    const result = getActiveCalculation();
+
+    currentCalculation = result;
+
+    const active = document.querySelector('.calc-tab.active');
+    const type = active?.dataset.calc || 'buy';
+
+    const titles = {
+        buy: 'مبلغ نهایی خرید',
+        sell: 'مبلغ خالص دریافتی فروش',
+        exchange: 'مابه‌التفاوت تعویض'
+    };
+
+    safeText('calculator-result-title', titles[type]);
+
+    if (type === 'exchange') {
+        safeText(
+            'calculator-result',
+            result.total > 0
+                ? money(result.total) + ' تومان پرداختی'
+                : result.total < 0
+                    ? money(Math.abs(result.total)) + ' تومان دریافتی'
+                    : '۰ تومان'
+        );
+    } else {
+        safeText(
+            'calculator-result',
+            money(result.total) + ' تومان'
+        );
+    }
+
+    safeText('calculator-details', result.details);
+
+    updatePercentAmounts();
+    updateSellerComparison();
+}
+
+/* =====================================================
+   SAVE CALCULATION - SUPPORT NEGATIVE EXCHANGE
+   ===================================================== */
+
+const originalSaveCalculationButton = $('save-calculation');
+
+if (originalSaveCalculationButton) {
+    originalSaveCalculationButton.addEventListener('click', () => {
+        if (
+            !currentCalculation ||
+            !Number.isFinite(currentCalculation.total) ||
+            currentCalculation.total === 0
+        ) {
+            return;
+        }
+    });
+}
+
+/* =====================================================
+   INITIALIZE CONTROLS
+   ===================================================== */
+
+applyDefaultPercentages();
+
+PERCENT_FIELDS.forEach(id => {
+    const input = $(id);
+
+    if (input) {
+        input.addEventListener('input', updatePercentAmounts);
+    }
+});
+
+updateCalculator();
+updatePercentAmounts();
