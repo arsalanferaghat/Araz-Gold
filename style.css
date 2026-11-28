@@ -826,17 +826,25 @@ tbody tr:hover {
 }
 
 /* =====================================
-   PERCENT SLIDERS (0 - 20)
+   PERCENT CONTROLS
+   اسلایدر ۰ تا ۲۰ + کادر ورود دستی + مبلغ درصد
 ===================================== */
 
-.percent-slider {
+.percent-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    min-width: 0;
+}
+
+.percent-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 8px;
 }
 
-.percent-slider input[type="range"] {
+.percent-range {
     flex: 1;
     min-width: 0;
     height: 6px;
@@ -847,21 +855,62 @@ tbody tr:hover {
     cursor: pointer;
 }
 
-.percent-slider input[type="range"]:focus {
+.percent-range:focus {
     box-shadow: none;
 }
 
-.percent-value {
-    min-width: 58px;
-    padding: 5px 8px;
-    text-align: center;
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--gold-light);
-    background: var(--panel2);
+.percent-number {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 0 10px;
+    background: #101213;
     border: 1px solid #55452b;
     border-radius: 8px;
-    direction: rtl;
+}
+
+.percent-number:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px #d8ad5518;
+}
+
+.percent-number input {
+    width: 62px;
+    padding: 9px 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+    direction: ltr;
+    font-weight: 700;
+    color: var(--gold-light);
+    -moz-appearance: textfield;
+}
+
+.percent-number input:focus {
+    box-shadow: none;
+}
+
+.percent-number input::-webkit-outer-spin-button,
+.percent-number input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.percent-number span {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.percent-amount {
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--green);
+    background: #17221e;
+    border: 1px solid #29483b;
+    border-radius: 7px;
+    overflow-wrap: anywhere;
 }
 
 /* =====================================
@@ -1097,8 +1146,12 @@ footer a:hover {
         font-size: 19px;
     }
 
-    .percent-slider input[type="range"] {
+    .percent-range {
         height: 8px;
+    }
+
+    .percent-amount {
+        font-size: 11px;
     }
 }
 
