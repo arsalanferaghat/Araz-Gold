@@ -1236,3 +1236,31 @@ footer a:hover {
   border: 1px solid #b99243;
   border-radius: 8px;
 }
+/* ===== اسلایدر درصد ===== */
+
+.percent-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.percent-slider input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  padding: 0;
+  accent-color: #d4af37;
+  cursor: pointer;
+}
+
+.percent-value {
+  min-width: 54px;
+  padding: 4px 8px;
+  text-align: center;
+  font-weight: 700;
+  color: #e6c16d;
+  background: #202326;
+  border: 1px solid #b99243;
+  border-radius: 8px;
+}
