@@ -1,5 +1,7 @@
 
-const CACHE_NAME = 'araz-gold-v18';
+const CACHE_NAME = 'araz-gold-v19';
+
+const PRICE_API_HOST = 'araz-gold-price.arsalanfaraghat8.workers.dev';
 
 const APP_FILES = [
     './',
@@ -18,16 +20,21 @@ self.addEventListener('install', event => {
     );
 });
 
-// فعال‌سازی و حذف کش نسخه‌های قدیمی
+// فعال‌سازی نسخه جدید و حذف کش‌های قدیمی برنامه
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys
-                    .filter(key => key !== CACHE_NAME)
-                    .map(key => caches.delete(key))
+        caches.keys()
+            .then(keys =>
+                Promise.all(
+                    keys
+                        .filter(key =>
+                            key.startsWith('araz-gold-') &&
+                            key !== CACHE_NAME
+                        )
+                        .map(key => caches.delete(key))
+                )
             )
-        ).then(() => self.clients.claim())
+            .then(() => self.clients.claim())
     );
 });
 
@@ -39,12 +46,12 @@ self.addEventListener('fetch', event => {
 
     const url = new URL(request.url);
 
-    // درخواست قیمت آنلاین؛ همیشه از شبکه
-    if (
-        url.hostname === 'araz-gold-price.arsalanfaraghat8.workers.dev'
-    ) {
+    // قیمت آنلاین: همیشه شبکه، بدون استفاده از کش
+    if (url.hostname === PRICE_API_HOST) {
         event.respondWith(
-            fetch(request, { cache: 'no-store' })
+            fetch(request, {
+                cache: 'no-store'
+            })
         );
         return;
     }
@@ -52,37 +59,43 @@ self.addEventListener('fetch', event => {
     // فقط فایل‌های خود برنامه
     if (url.origin !== self.location.origin) return;
 
-    // فایل‌های اصلی: ابتدا شبکه، سپس کش
+    // فایل‌های برنامه: ابتدا شبکه، سپس کش
     event.respondWith(
-        fetch(request, { cache: 'no-store' })
-            .then(response => {
-                if (response && response.status === 200) {
-                    const copy = response.clone();
+        fetch(request, {
+            cache: 'no-store'
+        })
+        .then(response => {
+            if (response && response.status === 200) {
+                const copy = response.clone();
 
+                event.waitUntil(
                     caches.open(CACHE_NAME)
-                        .then(cache => cache.put(request, copy));
-                }
-
-                return response;
-            })
-            .catch(async () => {
-                const cached = await caches.match(request);
-
-                if (cached) return cached;
-
-                if (request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
-
-                return new Response(
-                    'این فایل در حالت آفلاین موجود نیست.',
-                    {
-                        status: 503,
-                        headers: {
-                            'Content-Type': 'text/plain; charset=utf-8'
-                        }
-                    }
+                        .then(cache => cache.put(request, copy))
                 );
-            })
+            }
+
+            return response;
+        })
+        .catch(async () => {
+            const cached = await caches.match(request);
+
+            if (cached) return cached;
+
+            if (request.mode === 'navigate') {
+                const fallback = await caches.match('./index.html');
+
+                if (fallback) return fallback;
+            }
+
+            return new Response(
+                'این فایل در حالت آفلاین موجود نیست.',
+                {
+                    status: 503,
+                    headers: {
+                        'Content-Type': 'text/plain; charset=utf-8'
+                    }
+                }
+            );
+        })
     );
 });
